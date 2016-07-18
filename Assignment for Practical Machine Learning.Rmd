@@ -1,0 +1,123 @@
+---
+title: "Practical Machine Learning Assignment"
+author: "Chris Butterworth"
+date: "July 17, 2016"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r}
+
+library(caret)
+library(caTools)
+library(rpart)
+library(rpart.plot)
+library(randomForest)
+
+
+
+```
+## Import the Data
+
+First step is to get the data into our R environment.
+
+```{r}
+trainUrl <- "http://d396qusza40orc.cloudfront.net/predmachlearn/pml-training.csv"
+
+testUrl <- "http://d396qusza40orc.cloudfront.net/predmachlearn/pml-testing.csv"
+training <- read.csv(url(trainUrl), na.strings=c("NA","#DIV/0!",""))
+testing <- read.csv(url(testUrl), na.strings=c("NA","#DIV/0!",""))
+
+```
+
+
+## Data Cleaning
+
+remove the first column - it's just an index.
+
+```{r}
+
+training<-training[,-1]
+testing<-testing[,-1]
+
+```
+
+
+
+
+There are 159 variables and several of them provide little predictive value. We can remove them like this:
+
+```{r}
+training<-training[, apply(training, 2, function(x) !any(is.na(x)))] 
+testing<-testing[, apply(testing, 2, function(x) !any(is.na(x)))] 
+
+
+```
+
+Now we are down to just 59 variables.
+
+## Partition the dataset into two.
+
+
+```{r}
+spl<-sample.split(training$classe, SplitRatio = 0.70)
+
+train<-subset(training, spl==TRUE)
+test<-subset(training, spl==FALSE)
+
+```
+
+## Decision Tree Model
+
+Let's create a decision tree to predict "classe" using the train data set.
+
+
+
+```{r}
+modrpart<-rpart(classe ~ ., data = train, method = "class")
+
+
+```
+
+## View the model
+
+```{r}
+prp(modrpart)
+
+
+```
+
+## Predict using the "test" data set.
+
+```{r}
+predrpart<-predict(modrpart, newdata = test, type = "class")
+
+
+```
+
+## Compare predicted with actual values for "classe"
+
+
+```{r}
+confusionMatrix(predrpart, test$classe)
+
+
+```
+
+
+
+
+
+
+
+
+
